@@ -18,10 +18,9 @@ function App() {
       )}
       <main>
         <div className="p-grid">
-          {Array.from({ length: 9 }).map((_, i) => (
+          {Array.from({ length: 3 }).map((_, i) => (
             <ProductCard
               key={i}
-              inCart={i % 3 === 1}
               isFav={JSON.parse(localStorage.getItem('fav') || '[]').some((p) => p.id === i)}
               onToggleFav={() => {
                 const fav = JSON.parse(localStorage.getItem('fav') || '[]')

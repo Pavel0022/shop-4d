@@ -45,6 +45,7 @@
     border-color: #ff6a33;
 }
 
+
 .p-card__fav--on {
     border-color: #ff6a33;
     background: #fff5f0;
@@ -135,5 +136,5 @@
 @media (max-width: 1024px) {
     .p-grid {
         grid-template-columns: repeat(2, 1fr);
-    }
-}
+     }
+} 

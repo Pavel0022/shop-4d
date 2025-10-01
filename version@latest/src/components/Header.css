@@ -311,8 +311,4 @@
   border-radius: 1px;
 }
 
-@media (max-width: 1024px) {
-  .site-header {
-    display: none;
-  }
-}
+
