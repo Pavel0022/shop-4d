@@ -7,7 +7,7 @@ function App() {
   return (
     <div>
       <Header variant="guest" />
-      {/* Ниже оставлены для будущей авторизации: */}
+      {}
       {false && (
         <>
           <div style={{ height: 24 }} />
@@ -29,7 +29,7 @@ function App() {
                 const product = { id: i, title: 'Комбайн КЗС-1218 «ДЕСНА-ПОЛЕСЬЕ GS12»', price: 44.5, oldPrice: 50.5, discount: 50 }
                 const next = exists ? fav.filter((p) => p.id !== i) : [...fav, product]
                 localStorage.setItem('fav', JSON.stringify(next))
-                // триггер перерисовки
+               
                 window.dispatchEvent(new Event('hashchange'))
               }}
             />
