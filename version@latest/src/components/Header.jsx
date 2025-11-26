@@ -5,7 +5,7 @@ import './Header.css'
  * Desktop-only site header
  * Variant options: 'user' | 'manager' | 'guest'
  */
-export default function Header({ variant = 'guest' }) {
+export default function Header({ variant = 'guest', cartCount = 0, onCartClick, user, onLogout }) {
   const [isCatalogOpen, setIsCatalogOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const catalogRef = useRef(null)
@@ -92,38 +92,46 @@ export default function Header({ variant = 'guest' }) {
 
         <div className="site-header__right">
           <nav className="quick-actions" aria-label="Быстрые действия">
-            <a className="quick-actions__item" href="#" title="Избранное" aria-label="Избранное">
+            <a className="quick-actions__item" href="#/favorites" title="Избранное" aria-label="Избранное">
               <span className="qa-icon qa-icon--fav" />
               <span className="qa-label">Избранное</span>
             </a>
-            <a className="quick-actions__item" href="#" title="Заказы" aria-label="Заказы">
+            <a className="quick-actions__item" href="#/orders" title="Заказы" aria-label="Заказы">
               <span className="qa-icon qa-icon--orders" />
               <span className="qa-label">Заказы</span>
             </a>
-            <a className="quick-actions__item" href="#" title="Корзина" aria-label="Корзина">
+            <button className="quick-actions__item quick-actions__item--btn" type="button" title="Корзина" aria-label="Корзина" onClick={onCartClick}>
               <span className="qa-icon qa-icon--cart" />
               <span className="qa-label">Корзина</span>
-            </a>
+              {cartCount > 0 && <span className="qa-count">{cartCount}</span>}
+            </button>
           </nav>
 
           {variant === 'user' && (
             <div className="account account--user">
               <button type="button" className="account__btn" onClick={() => setIsProfileOpen((v) => !v)} aria-haspopup="menu" aria-expanded={isProfileOpen}>
                 <div className="avatar" aria-hidden>👤</div>
-                <div className="account__name">Алексей</div>
+                <div className="account__name">{user?.first_name || user?.last_name || 'Покупатель'}</div>
               </button>
               {isProfileOpen && (
                 <div ref={profileRef} className="profile-menu" role="menu">
                   <div className="profile-menu__item profile-menu__item--head">
                     <div className="avatar" aria-hidden>👤</div>
-                    <span>Алексей</span>
+                    <span>{user?.first_name || user?.last_name || 'Покупатель'}</span>
                     <span className="pm-arrow" />
                   </div>
-                  <button className="profile-menu__item" type="button">
+                  <button className="profile-menu__item" type="button" onClick={() => { window.location.hash = '#/profile' }}>
                     <span>Профиль</span>
                     <span className="pm-arrow" />
                   </button>
-                  <button className="profile-menu__item" type="button">
+                  <button
+                    className="profile-menu__item"
+                    type="button"
+                    onClick={() => {
+                      onLogout?.()
+                      setIsProfileOpen(false)
+                    }}
+                  >
                     <span>Выйти</span>
                     <span className="pm-arrow" />
                   </button>
@@ -159,7 +167,9 @@ export default function Header({ variant = 'guest' }) {
           )}
 
           {variant === 'guest' && (
-            <button type="button" className="login-btn">Войти</button>
+            <button type="button" className="login-btn" onClick={() => { window.location.hash = '#/login' }}>
+              Войти
+            </button>
           )}
         </div>
       </div>

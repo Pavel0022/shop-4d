@@ -1,42 +1,219 @@
-#root {
+.app-shell {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  padding: 0 16px 80px;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+main {
+  margin-top: 24px;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+.p-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.hero-banner {
+  margin-top: 16px;
+  border-radius: 24px;
+  background: linear-gradient(90deg, #ffe0c2 0%, #ffe8d3 20%, #ffeef0 45%, #fdf7ff 100%);
+  padding: 28px 32px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-banner::after {
+  content: '';
+  position: absolute;
+  right: -40px;
+  top: -40px;
+  width: 260px;
+  height: 260px;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 149, 87, 0.9), transparent 70%);
+  opacity: 0.6;
+}
+
+.hero-banner__content {
+  position: relative;
+  max-width: 520px;
+}
+
+.hero-banner__label {
+  margin: 0 0 8px;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #c05621;
+}
+
+.hero-banner__title {
+  margin: 0 0 12px;
+  font-size: 28px;
+  font-weight: 800;
+  color: #1f2933;
+}
+
+.hero-banner__text {
+  margin: 0 0 20px;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.hero-banner__btn {
+  border: none;
+  border-radius: 999px;
+  padding: 12px 26px;
+  background: linear-gradient(135deg, #ff8a4a, #ff5a3c);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 12px 28px rgba(255, 106, 51, 0.35);
+}
+
+.section-block {
+  margin-top: 40px;
+}
+
+.section-block__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.section-block__title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.section-block__link {
+  border: none;
+  background: none;
+  color: #ff6a33;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.section-block--promo {
+  margin-top: 48px;
+}
+
+.promo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.promo-card {
+  border-radius: 20px;
+  padding: 20px 22px;
+  color: #1f2933;
+}
+
+.promo-card h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.promo-card p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.promo-card--orange {
+  background: linear-gradient(135deg, #ffe7cf, #ffd7b0);
+}
+
+.promo-card--green {
+  background: linear-gradient(135deg, #e4f7cf, #c4f1c9);
+}
+
+.map-placeholder {
+  height: 260px;
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4b5563;
+  font-size: 14px;
+  background: #e5edf5;
+}
+
+.articles-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.article-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 18px 18px 20px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+}
+
+.article-card h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.article-card p {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.article-card__btn {
+  border-radius: 999px;
+  border: none;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  background: #f97316;
+  color: #fff;
+  cursor: pointer;
+}
+
+.section-loading,
+.section-error {
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+.section-error {
+  color: #b91c1c;
+}
+
+@media (max-width: 1024px) {
+  .p-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-  to {
-    transform: rotate(360deg);
+
+  .articles-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+@media (max-width: 768px) {
+  .app-shell {
+    padding: 0 12px 56px;
   }
-}
 
-.card {
-  padding: 2em;
-}
+  .hero-banner {
+    padding: 22px 18px;
+  }
 
-.read-the-docs {
-  color: #888;
+  .p-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .promo-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .articles-grid {
+    grid-template-columns: 1fr;
+  }
 }

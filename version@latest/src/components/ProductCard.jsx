@@ -7,16 +7,18 @@ export default function ProductCard({
   price = 44.5,
   oldPrice = 50.5,
   discount = 50,
-  inCart = false,
+  qty = 0,
   isFav = false,
   onToggleFav,
+  onAddToCart,
+  onDecrease,
 }) {
   return (
     <div className="p-card">
-      {discount ? (
-        <div className="p-card__badge">-{discount}%</div>
-      ) : null}
-      <button className={isFav ? 'p-card__fav p-card__fav--on' : 'p-card__fav'} aria-label="В избранное" onClick={onToggleFav}>❤</button>
+      {discount ? <div className="p-card__badge">-{discount}%</div> : null}
+      <button className={isFav ? 'p-card__fav p-card__fav--on' : 'p-card__fav'} aria-label="В избранное" onClick={onToggleFav}>
+        ❤
+      </button>
 
       <div className="p-card__image">
         <img src={lays} alt="Товар" />
@@ -38,9 +40,31 @@ export default function ProductCard({
         <span className="star" />
       </div>
 
-      <button className={inCart ? 'p-card__btn p-card__btn--in' : 'p-card__btn'}>
-        {inCart ? 'В корзине' : 'В корзину'}
-      </button>
+      {qty > 0 ? (
+        <div className="p-card__qty">
+          <button
+            type="button"
+            className="p-card__qty-btn p-card__qty-btn--minus"
+            onClick={onDecrease}
+            aria-label="Уменьшить количество"
+          >
+            −
+          </button>
+          <span className="p-card__qty-value">{qty}</span>
+          <button
+            type="button"
+            className="p-card__qty-btn p-card__qty-btn--plus"
+            onClick={onAddToCart}
+            aria-label="Увеличить количество"
+          >
+            +
+          </button>
+        </div>
+      ) : (
+        <button className="p-card__btn" onClick={onAddToCart}>
+          В корзину
+        </button>
+      )}
     </div>
   )
 }
