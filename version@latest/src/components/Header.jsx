@@ -1,11 +1,20 @@
 import React, { useEffect, useRef, useState } from 'react'
 import './Header.css'
+import logo from '../img_page/group.png'
 
 /**
  * Desktop-only site header
  * Variant options: 'user' | 'manager' | 'guest'
  */
-export default function Header({ variant = 'guest', cartCount = 0, onCartClick, user, onLogout }) {
+export default function Header({
+  variant = 'guest',
+  cartCount = 0,
+  onCartClick,
+  user,
+  onLogout,
+  onSelectCategory,
+  selectedCategory = 'Все товары',
+}) {
   const [isCatalogOpen, setIsCatalogOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const catalogRef = useRef(null)
@@ -13,6 +22,7 @@ export default function Header({ variant = 'guest', cartCount = 0, onCartClick, 
   const profileRef = useRef(null)
 
   const categories = [
+    'Все товары',
     'Хлебобулочные изделия',
     'Молоко, сыр, яйцо',
     'Фрукты и овощи',
@@ -58,10 +68,17 @@ export default function Header({ variant = 'guest', cartCount = 0, onCartClick, 
     <header className="site-header">
       <div className="site-header__inner">
         <div className="site-header__left">
-          <div className="brand">
-            <span className="brand__icon" aria-hidden>🙂</span>
+          <button
+            type="button"
+            className="brand brand--btn"
+            onClick={() => {
+              window.location.hash = ''
+              setIsCatalogOpen(false)
+            }}
+          >
+            <img className="brand__icon-img" src={logo} alt="Северяночка" />
             <span className="brand__name">СЕВЕРЯНОЧКА</span>
-          </div>
+          </button>
           <button
             ref={buttonRef}
             className="catalog-btn"
@@ -76,9 +93,25 @@ export default function Header({ variant = 'guest', cartCount = 0, onCartClick, 
           {isCatalogOpen && (
             <div ref={catalogRef} className="catalog-menu" role="menu">
               <ul className="catalog-list">
-                {categories.map((title, index) => (
-                  <li key={title} className={index === 0 ? 'catalog-list__item catalog-list__item--active' : 'catalog-list__item'}>
-                    <a href="#" className="catalog-list__link">{title}</a>
+                {categories.map((title) => (
+                  <li key={title} className="catalog-list__item">
+                    <a
+                      href="#"
+                      className="catalog-list__link"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        if (title === 'Все товары') {
+                          window.location.hash = ''
+                        } else if (onSelectCategory) {
+                          onSelectCategory(title)
+                        } else {
+                          window.location.hash = `#/category/${encodeURIComponent(title)}`
+                        }
+                        setIsCatalogOpen(false)
+                      }}
+                    >
+                      {title}
+                    </a>
                   </li>
                 ))}
               </ul>
@@ -94,15 +127,15 @@ export default function Header({ variant = 'guest', cartCount = 0, onCartClick, 
           <nav className="quick-actions" aria-label="Быстрые действия">
             <a className="quick-actions__item" href="#/favorites" title="Избранное" aria-label="Избранное">
               <span className="qa-icon qa-icon--fav" />
-              <span className="qa-label">Избранное</span>
+              <span className="quick-actions__label">Избранное</span>
             </a>
             <a className="quick-actions__item" href="#/orders" title="Заказы" aria-label="Заказы">
               <span className="qa-icon qa-icon--orders" />
-              <span className="qa-label">Заказы</span>
+              <span className="quick-actions__label">Заказы</span>
             </a>
             <button className="quick-actions__item quick-actions__item--btn" type="button" title="Корзина" aria-label="Корзина" onClick={onCartClick}>
               <span className="qa-icon qa-icon--cart" />
-              <span className="qa-label">Корзина</span>
+              <span className="quick-actions__label">Корзина</span>
               {cartCount > 0 && <span className="qa-count">{cartCount}</span>}
             </button>
           </nav>

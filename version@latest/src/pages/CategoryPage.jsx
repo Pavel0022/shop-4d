@@ -1,100 +1,128 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import Header from '../components/Header'
 import ProductCard from '../components/ProductCard'
+import '../App.css'
 
-export default function FavoritesPage() {
+const STORAGE_KEYS = {
+  favorites: 'sev-favorites',
+  cart: 'sev-cart',
+}
+
+const categoryRules = [
+  { name: 'Хлебобулочные изделия', keywords: ['хлеб', 'булк', 'батон', 'лаваш'] },
+  { name: 'Молоко, сыр, яйцо', keywords: ['молоко', 'сыр', 'йогурт', 'кефир', 'яйц', 'масло'] },
+  { name: 'Фрукты и овощи', keywords: ['яблок', 'банан', 'огур', 'помид', 'картоф', 'овощ', 'фрукт', 'зелень'] },
+  { name: 'Замороженные продукты', keywords: ['заморож'] },
+  { name: 'Напитки', keywords: ['напит', 'сок', 'вода', 'квас'] },
+  { name: 'Кондитерские изделия', keywords: ['шоколад', 'конфет', 'печенье', 'зефир', 'ваф'] },
+  { name: 'Чай, кофе', keywords: ['чай', 'кофе'] },
+  { name: 'Бакалея', keywords: ['круп', 'рис', 'греч', 'макарон', 'мука'] },
+  { name: 'Здоровое питание', keywords: ['фитнес', 'протеин', 'безглютен'] },
+  { name: 'Мясо, птица, колбаса', keywords: ['мяс', 'колбас', 'кур', 'фарш', 'стейк'] },
+  { name: 'Детское питание', keywords: ['детск', 'пюре', 'пелен'] },
+]
+
+function detectCategory(title = '') {
+  const lower = title.toLowerCase()
+  const found = categoryRules.find((rule) => rule.keywords.some((k) => lower.includes(k)))
+  return found ? found.name : 'Все товары'
+}
+
+export default function CategoryPage({ categoryName = 'Все товары' }) {
   const [catalog, setCatalog] = useState([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [visibleCount, setVisibleCount] = useState(6)
-  const [filters, setFilters] = useState({ priceMin: '', priceMax: '', inStock: false })
-  const [appliedFilters, setAppliedFilters] = useState({ priceMin: '', priceMax: '', inStock: false })
-  const [cart, setCart] = useState(() => {
+  const [favorites, setFavorites] = useState(() => {
     try {
-      const raw = localStorage.getItem('sev-cart')
+      const raw = localStorage.getItem(STORAGE_KEYS.favorites)
       return raw ? JSON.parse(raw) : []
     } catch {
       return []
     }
   })
-
-  let user = null
-  try {
-    const raw = localStorage.getItem('authUser')
-    user = raw ? JSON.parse(raw) : null
-  } catch {
-    user = null
-  }
-
-  const favoritesIds = (() => {
+  const [cart, setCart] = useState(() => {
     try {
-      const raw = localStorage.getItem('sev-favorites')
+      const raw = localStorage.getItem(STORAGE_KEYS.cart)
       return raw ? JSON.parse(raw) : []
     } catch {
       return []
     }
-  })()
+  })
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [filters, setFilters] = useState({ priceMin: '', priceMax: '', inStock: false })
+  const [appliedFilters, setAppliedFilters] = useState(filters)
+  const [visibleCount, setVisibleCount] = useState(6)
 
   useEffect(() => {
-    async function load() {
+    async function loadProducts() {
       try {
         setIsLoading(true)
         setError('')
         const res = await fetch('/api/products')
         const data = await res.json()
         if (!res.ok) throw new Error(data.message || 'Не удалось загрузить товары')
-        setCatalog(data.items || [])
+        setCatalog((data && data.items) || [])
       } catch (e) {
         setError(e.message || 'Не удалось загрузить товары')
       } finally {
         setIsLoading(false)
       }
     }
-    load()
+    loadProducts()
   }, [])
 
-  function handleLogout() {
-    localStorage.removeItem('authToken')
-    localStorage.removeItem('authUser')
-    window.location.hash = '#/login'
-  }
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.favorites, JSON.stringify(favorites))
+    } catch {
+      /* ignore */
+    }
+  }, [favorites])
 
-  const favSet = new Set(favoritesIds)
-  const favAll = catalog.filter((p) => favSet.has(p.id))
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.cart, JSON.stringify(cart))
+    } catch {
+      /* ignore */
+    }
+  }, [cart])
 
-  const priceLimits = useMemo(() => {
-    if (!favAll.length) return { min: 0, max: 0 }
-    const prices = favAll.map((p) => Number(p.price) || 0)
-    return { min: Math.min(...prices), max: Math.max(...prices) }
-  }, [favAll])
-
-  const favProducts = useMemo(() => {
-    return favAll.filter((p) => {
-      const price = Number(p.price) || 0
-      if (appliedFilters.priceMin !== '' && price < Number(appliedFilters.priceMin)) return false
-      if (appliedFilters.priceMax !== '' && price > Number(appliedFilters.priceMax)) return false
-      // нет данных о наличии — считаем все в наличии
-      return true
-    })
-  }, [favAll, appliedFilters])
+  const favoritesSet = useMemo(() => new Set(favorites.map((id) => Number(id))), [favorites])
   const cartMap = useMemo(() => new Map(cart.map((item) => [Number(item.id), Number(item.qty)])), [cart])
   const cartCount = useMemo(() => cart.reduce((sum, item) => sum + Number(item.qty || 0), 0), [cart])
 
-  function persistCart(updater) {
-    setCart((prev) => {
-      const next = typeof updater === 'function' ? updater(prev) : updater
-      try {
-        localStorage.setItem('sev-cart', JSON.stringify(next))
-      } catch {
-        /* ignore */
-      }
-      return next
+  const categorized = useMemo(
+    () => catalog.map((p) => ({ ...p, category: detectCategory(p.title) })),
+    [catalog],
+  )
+
+  const productsByCategory = useMemo(() => {
+    if (categoryName === 'Все товары') return categorized
+    return categorized.filter((p) => p.category === categoryName)
+  }, [categorized, categoryName])
+
+  const priceLimits = useMemo(() => {
+    if (!productsByCategory.length) return { min: 0, max: 0 }
+    const prices = productsByCategory.map((p) => Number(p.price) || 0)
+    return { min: Math.min(...prices), max: Math.max(...prices) }
+  }, [productsByCategory])
+
+  const filteredProducts = useMemo(() => {
+    return productsByCategory.filter((p) => {
+      const price = Number(p.price) || 0
+      if (appliedFilters.priceMin !== '' && price < Number(appliedFilters.priceMin)) return false
+      if (appliedFilters.priceMax !== '' && price > Number(appliedFilters.priceMax)) return false
+      return true
     })
+  }, [productsByCategory, appliedFilters])
+
+  function toggleFavorite(id) {
+    const numId = Number(id)
+    setFavorites((prev) => (prev.includes(numId) ? prev.filter((itemId) => itemId !== numId) : [...prev, numId]))
   }
 
   function addToCart(id) {
     const numId = Number(id)
-    persistCart((prev) => {
+    setCart((prev) => {
       const exists = prev.find((item) => item.id === numId)
       if (exists) {
         return prev.map((item) => (item.id === numId ? { ...item, qty: item.qty + 1 } : item))
@@ -105,7 +133,7 @@ export default function FavoritesPage() {
 
   function decreaseCart(id) {
     const numId = Number(id)
-    persistCart((prev) =>
+    setCart((prev) =>
       prev
         .map((item) => (item.id === numId ? { ...item, qty: item.qty - 1 } : item))
         .filter((item) => item.qty > 0),
@@ -126,34 +154,37 @@ export default function FavoritesPage() {
   return (
     <div className="app-shell">
       <Header
-        variant={user ? 'user' : 'guest'}
-        user={user}
+        variant={'guest'}
         cartCount={cartCount}
         onCartClick={() => {
           window.location.hash = '#/cart'
         }}
-        onLogout={handleLogout}
+        onSelectCategory={(name) => {
+          if (name === 'Все товары') window.location.hash = ''
+          else window.location.hash = `#/category/${encodeURIComponent(name)}`
+        }}
       />
+
       <main className="category-page">
         <div className="crumbs">
           <a className="crumbs__link" href="#">
             Главная
           </a>
           <span className="crumbs__sep">/</span>
-          <span className="crumbs__current">Избранное</span>
+          <span className="crumbs__current">{categoryName}</span>
         </div>
 
-        <h1 className="category-title">Избранное</h1>
+        <h1 className="category-title">{categoryName}</h1>
 
         <div className="category-chip-bar">
           <button className="chip">Товары нашего производства</button>
           <button className="chip">Полезное питание</button>
           <button className="chip">Без ГМО</button>
-          {(appliedFilters.priceMin || appliedFilters.priceMax) && (
+          {appliedFilters.priceMin || appliedFilters.priceMax ? (
             <span className="chip chip--outline">
               Цена {appliedFilters.priceMin || priceLimits.min}–{appliedFilters.priceMax || priceLimits.max} ₽
             </span>
-          )}
+          ) : null}
           <button className="chip chip--ghost" onClick={handleResetFilters}>
             Очистить фильтры
           </button>
@@ -184,12 +215,12 @@ export default function FavoritesPage() {
               <div className="filter-group">
                 <div className="filter-check">
                   <input
-                    id="fav-instock"
+                    id="instock"
                     type="checkbox"
                     checked={filters.inStock}
                     onChange={(e) => setFilters((f) => ({ ...f, inStock: e.target.checked }))}
                   />
-                  <label htmlFor="fav-instock">В наличии</label>
+                  <label htmlFor="instock">В наличии</label>
                 </div>
               </div>
 
@@ -201,12 +232,14 @@ export default function FavoritesPage() {
 
           <section className="category-grid">
             {error && <div className="section-error">{error}</div>}
-            {isLoading && <div className="section-loading">Загружаем товары…</div>}
-            {!isLoading && !error && favProducts.length === 0 && <div className="section-error">Список избранного пуст.</div>}
-            {!isLoading && !error && favProducts.length > 0 && (
+            {isLoading && !error && <div className="section-loading">Загружаем товары…</div>}
+            {!isLoading && !error && filteredProducts.length === 0 && (
+              <div className="section-error">По фильтрам ничего не нашли</div>
+            )}
+            {!isLoading && !error && (
               <>
                 <div className="p-grid">
-                  {favProducts.slice(0, visibleCount).map((product) => {
+                  {filteredProducts.slice(0, visibleCount).map((product) => {
                     const pid = Number(product.id)
                     return (
                       <ProductCard
@@ -216,20 +249,20 @@ export default function FavoritesPage() {
                         oldPrice={product.oldPrice != null ? Number(product.oldPrice) : Number(product.price) || 0}
                         discount={product.discount != null ? Number(product.discount) : 0}
                         qty={cartMap.get(pid) || 0}
-                        isFav
+                        isFav={favoritesSet.has(pid)}
+                        onToggleFav={() => toggleFavorite(pid)}
                         onAddToCart={() => addToCart(pid)}
                         onDecrease={() => decreaseCart(pid)}
-                        onToggleFav={null}
                       />
                     )
                   })}
                 </div>
 
-                {favProducts.length > visibleCount && (
+                {filteredProducts.length > visibleCount && (
                   <div className="category-pagination">
                     <button
-                      className="category-pagination__more"
                       type="button"
+                      className="category-pagination__more"
                       onClick={() => setVisibleCount((n) => n + 6)}
                     >
                       Показать ещё

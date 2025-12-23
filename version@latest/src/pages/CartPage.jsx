@@ -13,7 +13,11 @@ export default function CartPage() {
   const cart = (() => {
     try {
       const raw = localStorage.getItem('sev-cart')
-      return raw ? JSON.parse(raw) : []
+      const parsed = raw ? JSON.parse(raw) : []
+      if (!Array.isArray(parsed)) return []
+      return parsed
+        .filter((item) => item && typeof item.id !== 'undefined' && Number.isFinite(Number(item.qty)))
+        .map((item) => ({ id: item.id, qty: Number(item.qty) }))
     } catch {
       return []
     }

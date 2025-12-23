@@ -9,6 +9,7 @@ import RegisterPage from './pages/Register.jsx'
 import ProfilePage from './pages/Profile.jsx'
 import OrdersPage from './pages/Orders.jsx'
 import CartPage from './pages/CartPage.jsx'
+import CategoryPage from './pages/CategoryPage.jsx'
 
 function Router() {
   const [hash, setHash] = useState(window.location.hash)
@@ -17,6 +18,10 @@ function Router() {
     window.addEventListener('hashchange', onHash)
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
+  if (hash.startsWith('#/category/')) {
+    const name = decodeURIComponent(hash.replace('#/category/', ''))
+    return <CategoryPage categoryName={name || 'Все товары'} />
+  }
   if (hash === '#/login') return <LoginPage />
   if (hash === '#/register') return <RegisterPage />
   if (hash === '#/favorites') return <FavoritesPage />

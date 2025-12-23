@@ -26,9 +26,13 @@ function loadYandexScript(apiKey) {
 
 export default function YandexMap() {
   const ref = useRef(null)
+  const initialized = useRef(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
+    if (initialized.current) return
+    initialized.current = true
+
     const apiKey = import.meta.env.VITE_YANDEX_MAPS_KEY
     if (!apiKey) {
       setError('Укажите VITE_YANDEX_MAPS_KEY в .env, чтобы загрузить карту')

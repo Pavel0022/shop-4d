@@ -5,6 +5,7 @@ import ProductCard from './components/ProductCard'
 import CartModal from './components/CartModal'
 import YandexMap from './components/YandexMap'
 import './components/ProductCard.css'
+import logo from './img_page/logo.png'
 
 const STORAGE_KEYS = {
   favorites: 'sev-favorites',
@@ -71,48 +72,56 @@ function App() {
     localStorage.setItem(STORAGE_KEYS.cart, JSON.stringify(cart))
   }, [cart])
 
-  const favoritesSet = useMemo(() => new Set(favorites), [favorites])
-  const cartMap = useMemo(() => new Map(cart.map((item) => [item.id, item.qty])), [cart])
-  const cartCount = useMemo(() => cart.reduce((sum, item) => sum + item.qty, 0), [cart])
+  const favoritesSet = useMemo(() => new Set(favorites.map((id) => Number(id))), [favorites])
+  const cartMap = useMemo(() => new Map(cart.map((item) => [Number(item.id), Number(item.qty)])), [cart])
+  const cartCount = useMemo(() => cart.reduce((sum, item) => sum + Number(item.qty || 0), 0), [cart])
 
   const detailedCart = useMemo(() => {
-    return cart
-      .map((item) => {
-        const product = catalog.find((p) => p.id === item.id)
-        if (!product) return null
-        return { ...product, qty: item.qty }
-      })
-      .filter(Boolean)
+    return cart.map((item) => {
+      const product = catalog.find((p) => Number(p.id) === Number(item.id))
+      if (!product) {
+        return { id: item.id, title: `Товар №${item.id}`, price: 0, oldPrice: 0, discount: 0, qty: item.qty }
+      }
+      const price = Number(product.price) || 0
+      const oldPrice = product.oldPrice != null ? Number(product.oldPrice) : price
+      const discount = product.discount != null ? Number(product.discount) : 0
+      return { ...product, price, oldPrice, discount, qty: item.qty }
+    })
   }, [cart, catalog])
 
   function toggleFavorite(id) {
-    setFavorites((prev) => (prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]))
+    const numId = Number(id)
+    setFavorites((prev) => (prev.includes(numId) ? prev.filter((itemId) => itemId !== numId) : [...prev, numId]))
   }
 
   function addToCart(id) {
+    const numId = Number(id)
     setCart((prev) => {
-      const exists = prev.find((item) => item.id === id)
+      const exists = prev.find((item) => item.id === numId)
       if (exists) {
-        return prev.map((item) => (item.id === id ? { ...item, qty: item.qty + 1 } : item))
+        return prev.map((item) => (item.id === numId ? { ...item, qty: item.qty + 1 } : item))
       }
-      return [...prev, { id, qty: 1 }]
+      return [...prev, { id: numId, qty: 1 }]
     })
   }
 
   function decreaseCart(id) {
+    const numId = Number(id)
     setCart((prev) =>
       prev
-        .map((item) => (item.id === id ? { ...item, qty: item.qty - 1 } : item))
+        .map((item) => (item.id === numId ? { ...item, qty: item.qty - 1 } : item))
         .filter((item) => item.qty > 0),
     )
   }
 
   function increaseCart(id) {
-    setCart((prev) => prev.map((item) => (item.id === id ? { ...item, qty: item.qty + 1 } : item)))
+    const numId = Number(id)
+    setCart((prev) => prev.map((item) => (item.id === numId ? { ...item, qty: item.qty + 1 } : item)))
   }
 
   function removeFromCart(id) {
-    setCart((prev) => prev.filter((item) => item.id !== id))
+    const numId = Number(id)
+    setCart((prev) => prev.filter((item) => item.id !== numId))
   }
 
   function handleLogout() {
@@ -121,6 +130,8 @@ function App() {
     setAuthUser(null)
     window.location.hash = '#/login'
   }
+
+  const filteredProducts = catalog
 
   return (
     <div className="app-shell">
@@ -162,20 +173,23 @@ function App() {
           {isLoading && !error && <div className="section-loading">Загружаем товары…</div>}
           {!isLoading && !error && (
             <div className="p-grid">
-              {catalog.slice(0, 4).map((product) => (
-                <ProductCard
-                  key={product.id}
-                  title={product.title}
-                  price={Number(product.price) || 0}
-                  oldPrice={product.oldPrice != null ? Number(product.oldPrice) : Number(product.price) || 0}
-                  discount={product.discount != null ? Number(product.discount) : 0}
-                  qty={cartMap.get(product.id) || 0}
-                  isFav={favoritesSet.has(product.id)}
-                  onToggleFav={() => toggleFavorite(product.id)}
-                  onAddToCart={() => addToCart(product.id)}
-                  onDecrease={() => decreaseCart(product.id)}
-                />
-              ))}
+              {filteredProducts.slice(0, 4).map((product) => {
+                const pid = Number(product.id)
+                return (
+                  <ProductCard
+                    key={product.id}
+                    title={product.title}
+                    price={Number(product.price) || 0}
+                    oldPrice={product.oldPrice != null ? Number(product.oldPrice) : Number(product.price) || 0}
+                    discount={product.discount != null ? Number(product.discount) : 0}
+                    qty={cartMap.get(pid) || 0}
+                    isFav={favoritesSet.has(pid)}
+                    onToggleFav={() => toggleFavorite(pid)}
+                    onAddToCart={() => addToCart(pid)}
+                    onDecrease={() => decreaseCart(pid)}
+                  />
+                )
+              })}
             </div>
           )}
         </section>
@@ -189,23 +203,26 @@ function App() {
           </div>
           {!isLoading && !error && (
             <div className="p-grid">
-              {catalog
+              {filteredProducts
                 .filter((p) => p.isNew)
                 .slice(0, 4)
-                .map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    title={product.title}
-                    price={Number(product.price) || 0}
-                    oldPrice={product.oldPrice != null ? Number(product.oldPrice) : Number(product.price) || 0}
-                    discount={product.discount != null ? Number(product.discount) : 0}
-                    qty={cartMap.get(product.id) || 0}
-                    isFav={favoritesSet.has(product.id)}
-                    onToggleFav={() => toggleFavorite(product.id)}
-                    onAddToCart={() => addToCart(product.id)}
-                    onDecrease={() => decreaseCart(product.id)}
-                  />
-                ))}
+                .map((product) => {
+                  const pid = Number(product.id)
+                  return (
+                    <ProductCard
+                      key={product.id}
+                      title={product.title}
+                      price={Number(product.price) || 0}
+                      oldPrice={product.oldPrice != null ? Number(product.oldPrice) : Number(product.price) || 0}
+                      discount={product.discount != null ? Number(product.discount) : 0}
+                      qty={cartMap.get(pid) || 0}
+                      isFav={favoritesSet.has(pid)}
+                      onToggleFav={() => toggleFavorite(pid)}
+                      onAddToCart={() => addToCart(pid)}
+                      onDecrease={() => decreaseCart(pid)}
+                    />
+                  )
+                })}
             </div>
           )}
         </section>
@@ -219,23 +236,26 @@ function App() {
           </div>
           {!isLoading && !error && (
             <div className="p-grid">
-              {catalog
+              {filteredProducts
                 .filter((p) => p.wasBought)
                 .slice(0, 4)
-                .map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    title={product.title}
-                    price={Number(product.price) || 0}
-                    oldPrice={product.oldPrice != null ? Number(product.oldPrice) : Number(product.price) || 0}
-                    discount={product.discount != null ? Number(product.discount) : 0}
-                    qty={cartMap.get(product.id) || 0}
-                    isFav={favoritesSet.has(product.id)}
-                    onToggleFav={() => toggleFavorite(product.id)}
-                    onAddToCart={() => addToCart(product.id)}
-                    onDecrease={() => decreaseCart(product.id)}
-                  />
-                ))}
+                .map((product) => {
+                  const pid = Number(product.id)
+                  return (
+                    <ProductCard
+                      key={product.id}
+                      title={product.title}
+                      price={Number(product.price) || 0}
+                      oldPrice={product.oldPrice != null ? Number(product.oldPrice) : Number(product.price) || 0}
+                      discount={product.discount != null ? Number(product.discount) : 0}
+                      qty={cartMap.get(pid) || 0}
+                      isFav={favoritesSet.has(pid)}
+                      onToggleFav={() => toggleFavorite(pid)}
+                      onAddToCart={() => addToCart(pid)}
+                      onDecrease={() => decreaseCart(pid)}
+                    />
+                  )
+                })}
             </div>
           )}
         </section>
@@ -293,6 +313,29 @@ function App() {
           </div>
         </section>
       </main>
+
+      <footer className="footer">
+        <div className="footer__bg">
+          <div className="footer__row">
+            <div className="footer__brand">
+              <img className="footer__logo-img" src={logo} alt="Северяночка" />
+            </div>
+
+            <nav className="footer__links">
+              <a href="#">О компании</a>
+              <a href="#">Контакты</a>
+              <a href="#">Вакансии</a>
+              <a href="#">Статьи</a>
+              <a href="#">Политика обработки персональных данных</a>
+            </nav>
+
+            <div className="footer__actions">
+              <div className="footer__phone">8 800 777 33 33</div>
+            </div>
+          </div>
+        </div>
+        <div className="footer__meta">Дизайн — ZASOVSKY</div>
+      </footer>
 
       {isCartOpen && (
         <CartModal
